@@ -1,0 +1,1200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>글로컬 솔버톤 @ 춘천 · Gemini 기반 AI 활용 제안</title>
+  <style>
+    :root {
+      --paper: #f7f3ea;
+      --sheet: #fffdf7;
+      --ink: #17242a;
+      --muted: #697371;
+      --line: #d9d0c0;
+      --teal: #0f6b75;
+      --teal-dark: #08464d;
+      --teal-pale: #e5f1f0;
+      --clay: #bb5a30;
+      --clay-pale: #f6e0d5;
+      --gold: #d9a73f;
+      --green: #4b7f52;
+      --blue: #3f68b1;
+      --white: #ffffff;
+      --shadow: rgba(23, 36, 42, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(15, 107, 117, 0.1) 1px, transparent 1px),
+        linear-gradient(rgba(15, 107, 117, 0.07) 1px, transparent 1px),
+        var(--paper);
+      background-size: 36px 36px;
+      font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+    }
+
+    .slide {
+      display: none;
+      position: relative;
+      width: min(1400px, calc(100vw - 44px));
+      aspect-ratio: 16 / 9;
+      max-height: calc(100vh - 88px);
+      padding: clamp(34px, 4vw, 62px);
+      background: var(--sheet);
+      border: 2px solid var(--ink);
+      box-shadow: 14px 14px 0 var(--shadow);
+      overflow: hidden;
+    }
+
+    .slide.active {
+      display: block;
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(217, 167, 63, 0.14), transparent 22%),
+        linear-gradient(120deg, transparent 0 72%, rgba(15, 107, 117, 0.08) 72% 100%);
+    }
+
+    .slide > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .eyebrow {
+      margin: 0 0 16px;
+      color: var(--clay);
+      font-size: clamp(13px, 1.1vw, 16px);
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      line-height: 1.02;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 940px;
+      font-size: clamp(54px, 7vw, 106px);
+    }
+
+    h2 {
+      max-width: 990px;
+      font-size: clamp(40px, 5.2vw, 78px);
+    }
+
+    h3 {
+      margin: 0;
+      color: var(--teal-dark);
+      font-size: clamp(24px, 2.25vw, 38px);
+      line-height: 1.16;
+      font-weight: 950;
+    }
+
+    p {
+      margin: 0;
+      font-size: clamp(18px, 1.6vw, 25px);
+      line-height: 1.5;
+    }
+
+    .lead {
+      max-width: 980px;
+      margin-top: 26px;
+      color: #354142;
+      font-size: clamp(25px, 2.6vw, 38px);
+      line-height: 1.36;
+      font-weight: 800;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: clamp(14px, 1.05vw, 18px);
+      line-height: 1.48;
+    }
+
+    .meta {
+      position: absolute;
+      left: clamp(34px, 4vw, 62px);
+      right: clamp(34px, 4vw, 62px);
+      bottom: 32px;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 750;
+      border-top: 2px solid var(--line);
+      padding-top: 16px;
+    }
+
+    .title-mark {
+      position: absolute;
+      right: 58px;
+      top: 58px;
+      display: grid;
+      grid-template-columns: repeat(2, 84px);
+      grid-template-rows: repeat(2, 84px);
+      gap: 10px;
+      transform: rotate(-4deg);
+    }
+
+    .mark-cell {
+      border: 2px solid var(--ink);
+      background: var(--teal-pale);
+      box-shadow: 6px 6px 0 rgba(23, 36, 42, 0.12);
+    }
+
+    .mark-cell:nth-child(2) {
+      background: var(--clay-pale);
+    }
+
+    .mark-cell:nth-child(3) {
+      background: #f7e9bd;
+    }
+
+    .mark-cell:nth-child(4) {
+      background: #e8efe5;
+    }
+
+    .quote {
+      margin-top: 44px;
+      padding-left: 30px;
+      border-left: 12px solid var(--clay);
+      max-width: 1050px;
+      font-size: clamp(34px, 4.4vw, 68px);
+      line-height: 1.18;
+      font-weight: 950;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 34px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 42px;
+      padding: 8px 16px;
+      border: 2px solid var(--ink);
+      background: var(--white);
+      box-shadow: 4px 4px 0 rgba(23, 36, 42, 0.12);
+      color: var(--teal-dark);
+      font-size: clamp(15px, 1.1vw, 18px);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: clamp(26px, 3vw, 46px);
+      height: calc(100% - 98px);
+      align-items: center;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 34px;
+    }
+
+    .cards-5 {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-top: 36px;
+    }
+
+    .card,
+    .step-card {
+      min-height: 148px;
+      padding: 20px;
+      border: 2px solid var(--ink);
+      background: var(--white);
+      box-shadow: 6px 6px 0 rgba(23, 36, 42, 0.1);
+    }
+
+    .card h3,
+    .step-card h3 {
+      margin-bottom: 12px;
+      font-size: clamp(21px, 1.7vw, 30px);
+    }
+
+    .card p,
+    .step-card p {
+      color: #3b4748;
+      font-size: clamp(15px, 1.18vw, 19px);
+      line-height: 1.45;
+    }
+
+    .num {
+      display: inline-grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      margin-bottom: 14px;
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      background: var(--teal);
+      color: var(--white);
+      font-size: 17px;
+      font-weight: 950;
+    }
+
+    .tool-line {
+      margin-top: 18px;
+      padding: 18px 20px;
+      border-left: 8px solid var(--teal);
+      background: var(--teal-pale);
+      font-size: clamp(18px, 1.65vw, 26px);
+      font-weight: 900;
+      line-height: 1.38;
+    }
+
+    .tool-line strong {
+      color: var(--teal-dark);
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 40px;
+      align-items: stretch;
+    }
+
+    .workflow .step-card {
+      min-height: 250px;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 6px 10px;
+      background: var(--clay);
+      color: var(--white);
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .mock-window {
+      width: 100%;
+      min-height: 430px;
+      border: 2px solid var(--ink);
+      background: #fdfbf5;
+      box-shadow: 10px 10px 0 rgba(23, 36, 42, 0.12);
+      overflow: hidden;
+    }
+
+    .window-top {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      border-bottom: 2px solid var(--ink);
+      background: #efe6d8;
+      font-weight: 900;
+      color: var(--teal-dark);
+      font-size: 15px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid var(--ink);
+      background: var(--clay);
+    }
+
+    .dot:nth-child(2) {
+      background: var(--gold);
+    }
+
+    .dot:nth-child(3) {
+      background: var(--green);
+      margin-right: 8px;
+    }
+
+    .window-body {
+      padding: 22px;
+    }
+
+    .visual-title {
+      margin: 0 0 16px;
+      color: var(--ink);
+      font-size: clamp(20px, 1.75vw, 30px);
+      font-weight: 950;
+      line-height: 1.18;
+    }
+
+    .source-list,
+    .note-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .source,
+    .note {
+      padding: 12px 14px;
+      border: 2px solid var(--line);
+      background: var(--white);
+      font-size: clamp(14px, 1.05vw, 18px);
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .source span,
+    .note span {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .infographic {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .metric {
+      min-height: 96px;
+      padding: 14px;
+      border: 2px solid var(--ink);
+      background: var(--teal-pale);
+    }
+
+    .metric b {
+      display: block;
+      color: var(--teal-dark);
+      font-size: clamp(26px, 2.7vw, 42px);
+      line-height: 1;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 8px;
+      color: #475252;
+      font-size: clamp(13px, 1vw, 17px);
+      font-weight: 800;
+    }
+
+    .meeting-layout {
+      display: grid;
+      grid-template-columns: 1.02fr 0.98fr;
+      gap: 18px;
+    }
+
+    .transcript {
+      min-height: 292px;
+      padding: 16px;
+      background: var(--white);
+      border: 2px solid var(--ink);
+    }
+
+    .line {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: clamp(13px, 1vw, 16px);
+      line-height: 1.34;
+    }
+
+    .line b {
+      color: var(--teal-dark);
+    }
+
+    .pain-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .pain {
+      padding: 12px;
+      border: 2px solid var(--ink);
+      background: var(--clay-pale);
+      color: #3e2f28;
+      font-size: clamp(13px, 1vw, 16px);
+      font-weight: 850;
+      line-height: 1.35;
+    }
+
+    .chart {
+      height: 220px;
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 14px;
+      align-items: end;
+      padding: 18px;
+      border: 2px solid var(--ink);
+      background: var(--white);
+    }
+
+    .axis {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .bars {
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      align-items: end;
+      border-left: 2px solid var(--line);
+      border-bottom: 2px solid var(--line);
+      padding-left: 12px;
+    }
+
+    .bar {
+      min-height: 28px;
+      background: var(--teal);
+      border: 2px solid var(--ink);
+    }
+
+    .bar:nth-child(2),
+    .bar:nth-child(5) {
+      background: var(--gold);
+    }
+
+    .bar:nth-child(3),
+    .bar:nth-child(6) {
+      background: var(--clay);
+    }
+
+    .map-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .map {
+      min-height: 134px;
+      border: 2px solid var(--ink);
+      background:
+        linear-gradient(35deg, transparent 0 36%, rgba(15, 107, 117, 0.18) 36% 39%, transparent 39%),
+        linear-gradient(115deg, transparent 0 48%, rgba(187, 90, 48, 0.18) 48% 51%, transparent 51%),
+        #edf3ef;
+      position: relative;
+    }
+
+    .pin {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--ink);
+      border-radius: 50% 50% 50% 0;
+      background: var(--clay);
+      transform: rotate(-45deg);
+    }
+
+    .pin:nth-child(1) { left: 24%; top: 38%; }
+    .pin:nth-child(2) { left: 58%; top: 25%; background: var(--teal); }
+    .pin:nth-child(3) { left: 70%; top: 62%; background: var(--gold); }
+
+    .prototype {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 336px;
+      border: 2px solid var(--ink);
+      background: var(--white);
+    }
+
+    .phone {
+      align-self: center;
+      justify-self: center;
+      width: 146px;
+      height: 268px;
+      padding: 16px 12px;
+      border: 3px solid var(--ink);
+      border-radius: 20px;
+      background: #f8faf7;
+      box-shadow: 7px 7px 0 rgba(23, 36, 42, 0.13);
+    }
+
+    .phone-screen {
+      height: 100%;
+      display: grid;
+      gap: 9px;
+      align-content: start;
+    }
+
+    .phone-pill {
+      height: 16px;
+      border-radius: 20px;
+      background: var(--teal);
+    }
+
+    .phone-block {
+      height: 38px;
+      border: 2px solid var(--line);
+      background: var(--teal-pale);
+    }
+
+    .flow {
+      display: grid;
+      align-content: center;
+      gap: 12px;
+      padding: 22px;
+    }
+
+    .flow-step {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: center;
+      font-size: clamp(14px, 1vw, 17px);
+      font-weight: 850;
+    }
+
+    .flow-step b {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--clay);
+      color: var(--white);
+      font-size: 14px;
+    }
+
+    .slide-preview {
+      min-height: 332px;
+      padding: 22px;
+      border: 2px solid var(--ink);
+      background: var(--white);
+    }
+
+    .mini-slide {
+      min-height: 244px;
+      padding: 20px;
+      border: 2px solid var(--ink);
+      background:
+        linear-gradient(90deg, var(--teal-pale) 0 45%, var(--white) 45% 100%);
+    }
+
+    .mini-slide h4 {
+      margin: 0 0 18px;
+      color: var(--teal-dark);
+      font-size: clamp(22px, 1.8vw, 30px);
+      line-height: 1.2;
+    }
+
+    .bilingual {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .lang-box {
+      padding: 16px;
+      border: 2px solid var(--ink);
+      background: var(--sheet);
+      font-size: clamp(14px, 1.05vw, 17px);
+      line-height: 1.45;
+      font-weight: 800;
+    }
+
+    .screenshot-tip {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border: 2px dashed var(--clay);
+      background: #fff8ec;
+      color: #4c3d34;
+      font-size: clamp(13px, 1vw, 16px);
+      line-height: 1.4;
+      font-weight: 800;
+    }
+
+    .screenshot-tip b {
+      color: var(--clay);
+    }
+
+    .program-table {
+      display: grid;
+      grid-template-columns: 0.7fr 1.3fr 1fr;
+      margin-top: 34px;
+      border: 2px solid var(--ink);
+      background: var(--white);
+    }
+
+    .program-table div {
+      min-height: 68px;
+      padding: 14px 16px;
+      border-right: 2px solid var(--line);
+      border-bottom: 2px solid var(--line);
+      font-size: clamp(14px, 1.1vw, 18px);
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    .program-table div:nth-child(3n) {
+      border-right: 0;
+    }
+
+    .program-table div:nth-last-child(-n+3) {
+      border-bottom: 0;
+    }
+
+    .head-cell {
+      background: var(--teal-dark);
+      color: var(--white);
+      font-weight: 950;
+    }
+
+    .ask-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 36px;
+      max-width: 980px;
+    }
+
+    .ask {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 18px;
+      border: 2px solid var(--ink);
+      background: var(--white);
+      box-shadow: 5px 5px 0 rgba(23, 36, 42, 0.09);
+    }
+
+    .ask b {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--teal);
+      color: var(--white);
+    }
+
+    .ask span {
+      font-size: clamp(18px, 1.45vw, 23px);
+      line-height: 1.38;
+      font-weight: 850;
+    }
+
+    .controls {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      z-index: 10;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      border: 2px solid var(--ink);
+      background: rgba(255, 253, 247, 0.95);
+      box-shadow: 5px 5px 0 rgba(23, 36, 42, 0.12);
+    }
+
+    button {
+      min-width: 42px;
+      height: 36px;
+      border: 2px solid var(--ink);
+      background: var(--white);
+      color: var(--ink);
+      font-size: 18px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--teal-pale);
+    }
+
+    .counter {
+      min-width: 82px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .progress {
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 20;
+      height: 5px;
+      width: 0%;
+      background: var(--clay);
+    }
+
+    @media (max-width: 900px) {
+      body {
+        overflow: auto;
+      }
+
+      .deck {
+        height: auto;
+        padding: 16px;
+        gap: 18px;
+      }
+
+      .slide {
+        width: 100%;
+        min-height: 720px;
+        aspect-ratio: auto;
+        max-height: none;
+        padding: 30px;
+      }
+
+      .grid-2,
+      .grid-3,
+      .cards-5,
+      .workflow,
+      .meeting-layout,
+      .prototype,
+      .program-table {
+        grid-template-columns: 1fr;
+      }
+
+      .program-table div,
+      .program-table div:nth-child(3n),
+      .program-table div:nth-last-child(-n+3) {
+        border-right: 0;
+        border-bottom: 2px solid var(--line);
+      }
+
+      .program-table div:last-child {
+        border-bottom: 0;
+      }
+
+      .title-mark,
+      .meta {
+        display: none;
+      }
+
+      .controls {
+        position: sticky;
+        bottom: 10px;
+      }
+    }
+
+    @media print {
+      body {
+        overflow: visible;
+        background: var(--paper);
+      }
+
+      .deck {
+        display: block;
+        padding: 0;
+      }
+
+      .slide {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        max-height: none;
+        box-shadow: none;
+        page-break-after: always;
+      }
+
+      .controls,
+      .progress {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <main class="deck" aria-live="polite">
+    <section class="slide active">
+      <p class="eyebrow">Station C Open Startup Academy</p>
+      <h1>글로컬 솔버톤 @ 춘천<br />Gemini 기반 AI 활용 제안</h1>
+      <p class="lead">국제 학생팀이 1주일 안에 현장 이해, 데이터 검증, 프로토타입, 이중언어 피치까지 완주하게 만드는 AI 운영체계</p>
+      <div class="title-mark" aria-hidden="true">
+        <div class="mark-cell"></div>
+        <div class="mark-cell"></div>
+        <div class="mark-cell"></div>
+        <div class="mark-cell"></div>
+      </div>
+      <div class="meta">
+        <span>2026.05.29 미팅용 초안</span>
+        <span>AI 활용 파트너 제안</span>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Executive Summary</p>
+      <h2>AI의 역할은 답을 대신 내는 것이 아니다</h2>
+      <div class="quote">AI는 학생들이 짧은 캠프 안에서 현장 데이터 기반 해결안을 끝까지 만들어내게 하는 운영 인프라다.</div>
+      <div class="chip-row">
+        <span class="chip">언어 장벽 해소</span>
+        <span class="chip">춘천 자료 리서치</span>
+        <span class="chip">데이터 검증</span>
+        <span class="chip">프로토타입 제작</span>
+        <span class="chip">이중언어 피치</span>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Program Context</p>
+      <h2>프로그램 일정에 AI를 한 겹 입힌다</h2>
+      <div class="program-table">
+        <div class="head-cell">일정</div>
+        <div class="head-cell">기존 프로그램</div>
+        <div class="head-cell">AI 적용 지점</div>
+        <div>7.20</div>
+        <div>창업생태계, K-콘텐츠, 사회문제 대응 학습</div>
+        <div>Gemini + NotebookLM 리서치 브리핑</div>
+        <div>7.21~7.22</div>
+        <div>상권 탐방, 기관 방문, 창업가·사회혁신 기업인 대화</div>
+        <div>Meet 전사, Gemini Docs 요약·번역</div>
+        <div>7.23</div>
+        <div>멘토링, 가설 기반 솔루션 고도화</div>
+        <div>Sheets 분석, Looker Studio 시각화, Antigravity 프로토타입</div>
+        <div>7.24</div>
+        <div>Startup Pitch 최종 발표</div>
+        <div>Slides + Gemini 이중언어 피치와 Q&A 리허설</div>
+      </div>
+      <div class="screenshot-tip"><b>확인 필요:</b> PDF 일정은 2026.07.19~07.26, 통화 메모는 2026.07.26~08.01로 달라 최종 일정 확정이 필요합니다.</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Operating Model</p>
+      <h2>팀별 AI 워크스페이스를 만든다</h2>
+      <div class="workflow">
+        <div class="step-card">
+          <span class="num">1</span>
+          <h3>자료 수집</h3>
+          <p>춘천 통계, 기사, 공공데이터, 프로그램 자료를 Drive에 모은다.</p>
+        </div>
+        <div class="step-card">
+          <span class="num">2</span>
+          <h3>지식화</h3>
+          <p>NotebookLM과 Gemini가 팀별 질의응답 가능한 지식베이스가 된다.</p>
+        </div>
+        <div class="step-card">
+          <span class="num">3</span>
+          <h3>현장 기록</h3>
+          <p>탐방과 대화를 전사·번역해 분석 가능한 원자료로 축적한다.</p>
+        </div>
+        <div class="step-card">
+          <span class="num">4</span>
+          <h3>검증·제작</h3>
+          <p>Sheets, Looker Studio, Antigravity로 근거와 데모를 만든다.</p>
+        </div>
+        <div class="step-card">
+          <span class="num">5</span>
+          <h3>발표</h3>
+          <p>Slides와 Gemini로 영어 발표와 한국어 심사 대응을 동시에 준비한다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Five AI Use Cases</p>
+      <h2>핵심 제안 5가지와 툴 한 줄</h2>
+      <div class="cards-5">
+        <div class="card">
+          <span class="num">1</span>
+          <h3>리서치</h3>
+          <p>Gemini + NotebookLM으로 춘천 이슈 자료를 요약하고 1-page 브리핑과 인포그래픽을 만든다.</p>
+        </div>
+        <div class="card">
+          <span class="num">2</span>
+          <h3>전사</h3>
+          <p>Google Meet Transcripts + Gemini Docs로 현장 대화를 전사·번역하고 페인포인트를 뽑는다.</p>
+        </div>
+        <div class="card">
+          <span class="num">3</span>
+          <h3>분석</h3>
+          <p>Sheets + Gemini + Looker Studio로 공공데이터를 정리하고 차트·지도 근거를 만든다.</p>
+        </div>
+        <div class="card">
+          <span class="num">4</span>
+          <h3>데모</h3>
+          <p>Gemini Canvas 또는 Antigravity로 서비스 흐름과 클릭 가능한 프로토타입을 만든다.</p>
+        </div>
+        <div class="card">
+          <span class="num">5</span>
+          <h3>피치</h3>
+          <p>Google Slides + Gemini로 영문 발표와 한국어 요약, 예상 Q&A를 함께 준비한다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">AI Use 01 · Research</p>
+      <div class="grid-2">
+        <div>
+          <h2>춘천을 빠르게 이해시키는 리서치 엔진</h2>
+          <div class="tool-line"><strong>Gemini + NotebookLM</strong>으로 춘천 인구, 상권, 빈집, 청년 유출, 돌봄 자료를 요약·비교하고 팀별 1-page 브리핑과 인포그래픽을 생성한다.</div>
+          <div class="screenshot-tip"><b>스크린샷 추천:</b> NotebookLM에 춘천 관련 PDF·기사·통계가 업로드된 화면, Gemini가 “춘천 청년 유출 원인 5가지”를 표로 정리한 화면, 생성된 인포그래픽 초안.</div>
+        </div>
+        <div class="mock-window" role="img" aria-label="NotebookLM 리서치 보드 예시">
+          <div class="window-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span>NotebookLM · Chuncheon Brief</div>
+          <div class="window-body">
+            <p class="visual-title">춘천 이슈 1-page 브리핑</p>
+            <div class="source-list">
+              <div class="source">Source 01 <span>춘천시 인구 통계 PDF</span></div>
+              <div class="source">Source 02 <span>빈집·주거 관련 공공자료</span></div>
+              <div class="source">Source 03 <span>상권·관광·청년 유출 기사</span></div>
+            </div>
+            <div class="infographic">
+              <div class="metric"><b>3</b><span>핵심 문제 후보</span></div>
+              <div class="metric"><b>12</b><span>검증 질문</span></div>
+              <div class="metric"><b>5</b><span>해외 비교 사례</span></div>
+              <div class="metric"><b>1</b><span>영문 브리핑</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">AI Use 02 · Field Notes</p>
+      <div class="grid-2">
+        <div>
+          <h2>현장 대화를 분석 가능한 데이터로 바꾼다</h2>
+          <div class="tool-line"><strong>Google Meet Transcripts + Gemini in Docs</strong>로 현장 대화나 기관 미팅을 녹음·전사하고, 핵심 발언·페인포인트·이해관계자 요구·영한 요약으로 정리한다.</div>
+          <div class="screenshot-tip"><b>스크린샷 추천:</b> Meet에서 Transcripts 또는 Take notes with Gemini가 켜진 화면, 회의 후 자동 생성된 Google Docs 전사본, Gemini가 페인포인트 표로 재정리한 화면. 녹음·전사는 참가자 동의 문구를 함께 넣는 것이 좋습니다.</div>
+        </div>
+        <div class="mock-window" role="img" aria-label="Google Meet 전사와 Gemini 문서 요약 예시">
+          <div class="window-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span>Meet Transcript → Gemini Docs</div>
+          <div class="window-body meeting-layout">
+            <div class="transcript">
+              <p class="visual-title">Transcript</p>
+              <div class="line"><b>상인 A</b><span>평일 낮에는 유동인구가 줄고, 저녁에는 관광객이 머무르지 않습니다.</span></div>
+              <div class="line"><b>학생 B</b><span>청년이 오래 머물 이유가 부족하다는 말씀이군요.</span></div>
+              <div class="line"><b>기관 C</b><span>돌봄 수요는 늘지만 이동 지원과 정보 접근이 어렵습니다.</span></div>
+            </div>
+            <div class="pain-grid">
+              <p class="visual-title">Gemini Summary</p>
+              <div class="pain">Pain point 01 · 체류형 소비 부족</div>
+              <div class="pain">Pain point 02 · 청년 정착 동기 약함</div>
+              <div class="pain">Pain point 03 · 취약계층 이동·정보 접근성</div>
+              <div class="pain">Next · 데이터로 검증할 질문 6개 생성</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">AI Use 03 · Data</p>
+      <div class="grid-2">
+        <div>
+          <h2>비전공 학생도 근거 있는 발표를 만든다</h2>
+          <div class="tool-line"><strong>Google Sheets + Gemini + Looker Studio</strong>로 공공데이터와 현장 기록을 정리해 가설을 검증하고 차트, 지도, 대시보드 형태의 근거 자료를 만든다.</div>
+          <div class="screenshot-tip"><b>스크린샷 추천:</b> Sheets에서 Gemini가 데이터 컬럼을 설명하고 차트를 제안하는 화면, Looker Studio 대시보드 초안, 춘천 지도 위에 이슈 지점을 표시한 화면.</div>
+        </div>
+        <div class="mock-window" role="img" aria-label="Sheets와 Looker Studio 데이터 시각화 예시">
+          <div class="window-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span>Sheets + Looker Studio</div>
+          <div class="window-body">
+            <p class="visual-title">가설 검증 대시보드</p>
+            <div class="chart">
+              <div class="axis"><span>높음</span><span>중간</span><span>낮음</span></div>
+              <div class="bars">
+                <div class="bar" style="height: 44%"></div>
+                <div class="bar" style="height: 62%"></div>
+                <div class="bar" style="height: 38%"></div>
+                <div class="bar" style="height: 76%"></div>
+                <div class="bar" style="height: 58%"></div>
+                <div class="bar" style="height: 84%"></div>
+              </div>
+            </div>
+            <div class="map-grid">
+              <div class="map"><span class="pin"></span><span class="pin"></span><span class="pin"></span></div>
+              <div class="note-list">
+                <div class="note">상권별 체류 시간 비교</div>
+                <div class="note">빈집·청년 활동 거점 후보</div>
+                <div class="note">기관 방문 내용과 통계 교차검증</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">AI Use 04 · Prototype</p>
+      <div class="grid-2">
+        <div>
+          <h2>PPT 아이디어를 눌러볼 수 있는 데모로 만든다</h2>
+          <div class="tool-line"><strong>Gemini Canvas 또는 Google Antigravity</strong>로 아이디어를 서비스 흐름, 화면 구조, 사용자 시나리오로 구체화하고 클릭 가능한 웹/앱 프로토타입을 제작한다.</div>
+          <div class="screenshot-tip"><b>스크린샷 추천:</b> Gemini가 화면 설계안을 생성한 화면, Antigravity에서 프롬프트로 앱 화면을 만들고 테스트하는 화면, 최종 프로토타입의 모바일 첫 화면.</div>
+        </div>
+        <div class="mock-window" role="img" aria-label="Antigravity 프로토타입 제작 예시">
+          <div class="window-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span>Antigravity · Prototype Build</div>
+          <div class="window-body">
+            <p class="visual-title">서비스 흐름 → 앱 목업</p>
+            <div class="prototype">
+              <div class="phone">
+                <div class="phone-screen">
+                  <div class="phone-pill"></div>
+                  <div class="phone-block"></div>
+                  <div class="phone-block" style="height: 64px; background: #f7e9bd;"></div>
+                  <div class="phone-block"></div>
+                  <div class="phone-block" style="height: 48px; background: #e8efe5;"></div>
+                </div>
+              </div>
+              <div class="flow">
+                <div class="flow-step"><b>1</b><span>사용자 문제와 현장 인사이트 입력</span></div>
+                <div class="flow-step"><b>2</b><span>Gemini가 서비스 플로우와 화면 구조 생성</span></div>
+                <div class="flow-step"><b>3</b><span>Antigravity가 프론트엔드 목업 구현</span></div>
+                <div class="flow-step"><b>4</b><span>멘토 피드백 후 발표용 데모로 정리</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">AI Use 05 · Pitch</p>
+      <div class="grid-2">
+        <div>
+          <h2>영어로 만들고 한국어로 설득한다</h2>
+          <div class="tool-line"><strong>Google Slides + Gemini</strong>로 영어 발표자료와 한국어 요약본을 동시에 만들고, 춘천시·심사위원 관점의 예상 질문과 답변을 리허설한다.</div>
+          <div class="screenshot-tip"><b>스크린샷 추천:</b> Google Slides에서 Gemini가 슬라이드 문구를 다듬는 화면, 같은 슬라이드의 영어/한국어 병기 버전, “춘천시 심사위원 예상 질문 10개”를 Gemini가 생성한 화면.</div>
+        </div>
+        <div class="slide-preview" role="img" aria-label="이중언어 피치 슬라이드 예시">
+          <div class="mini-slide">
+            <h4>Vacant House to Youth Micro-Stay Network</h4>
+            <div class="bilingual">
+              <div class="lang-box">EN · We convert underused houses into short-stay work hubs for students, creators, and early founders.</div>
+              <div class="lang-box">KR · 빈집을 청년과 창업가가 머무는 단기 체류형 작업 거점으로 전환합니다.</div>
+            </div>
+            <div class="infographic">
+              <div class="metric"><b>Data</b><span>공공데이터와 현장 인터뷰 근거</span></div>
+              <div class="metric"><b>Demo</b><span>클릭 가능한 예약·매칭 화면</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Pre-Camp Training</p>
+      <h2>사전 학습 3회로 팀의 출발선을 맞춘다</h2>
+      <div class="grid-3">
+        <div class="card">
+          <span class="tag">Session 01</span>
+          <h3>리서치·번역·출처 검증</h3>
+          <p>Gemini와 NotebookLM으로 춘천 자료를 읽고, 외국 학생도 이해할 수 있는 영문 브리핑을 만든다.</p>
+        </div>
+        <div class="card">
+          <span class="tag">Session 02</span>
+          <h3>데이터 분석·시각화</h3>
+          <p>Sheets와 Looker Studio로 공공데이터를 정리하고, 발표에 바로 쓸 수 있는 차트와 지도 근거를 만든다.</p>
+        </div>
+        <div class="card">
+          <span class="tag">Session 03</span>
+          <h3>프로토타입·피치</h3>
+          <p>Gemini, Antigravity, Slides로 서비스 화면을 만들고 영어 발표와 한국어 Q&A를 리허설한다.</p>
+        </div>
+      </div>
+      <div class="tool-line">목표 산출물: 문제정의 1장 + 데이터 근거 1장 + AI 활용 방법론 1장 + 클릭 가능한 프로토타입 + 영한 피치덱</div>
+    </section>
+
+    <section class="slide">
+      <p class="eyebrow">Meeting Ask</p>
+      <h2>내일 확인해야 할 결정 사항</h2>
+      <div class="ask-list">
+        <div class="ask"><b>1</b><span>AI 구독료 또는 Workspace/Gemini 사용 권한을 팀 단위로 지원할 수 있는가?</span></div>
+        <div class="ask"><b>2</b><span>최종 일정은 2026.07.19~07.26인가, 2026.07.26~08.01인가?</span></div>
+        <div class="ask"><b>3</b><span>내 역할은 사전교육 중심인가, 캠프 전 과정 AI 파트너인가?</span></div>
+        <div class="ask"><b>4</b><span>운영사 선정 후 AI 워크플로우와 산출물 템플릿을 어떻게 반영할 것인가?</span></div>
+      </div>
+      <div class="meta">
+        <span>Closing</span>
+        <span>멋진 한 방보다 중요한 것은 학생을 끝까지 완주시키는 AI 워크플로우입니다.</span>
+      </div>
+    </section>
+  </main>
+
+  <div class="controls" aria-label="슬라이드 조작">
+    <button id="prev" type="button" aria-label="이전 슬라이드">‹</button>
+    <div class="counter" id="counter">1 / 12</div>
+    <button id="next" type="button" aria-label="다음 슬라이드">›</button>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const counter = document.getElementById("counter");
+    const progress = document.getElementById("progress");
+    let index = 0;
+
+    function showSlide(nextIndex) {
+      index = (nextIndex + slides.length) % slides.length;
+      slides.forEach((slide, slideIndex) => {
+        slide.classList.toggle("active", slideIndex === index);
+      });
+      counter.textContent = `${index + 1} / ${slides.length}`;
+      progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+      window.location.hash = `slide-${index + 1}`;
+    }
+
+    document.getElementById("prev").addEventListener("click", () => showSlide(index - 1));
+    document.getElementById("next").addEventListener("click", () => showSlide(index + 1));
+
+    window.addEventListener("keydown", (event) => {
+      if (["ArrowRight", "PageDown", " "].includes(event.key)) {
+        event.preventDefault();
+        showSlide(index + 1);
+      }
+      if (["ArrowLeft", "PageUp"].includes(event.key)) {
+        event.preventDefault();
+        showSlide(index - 1);
+      }
+      if (event.key === "Home") showSlide(0);
+      if (event.key === "End") showSlide(slides.length - 1);
+    });
+
+    const fromHash = Number((window.location.hash.match(/slide-(\d+)/) || [])[1]);
+    if (fromHash >= 1 && fromHash <= slides.length) {
+      showSlide(fromHash - 1);
+    } else {
+      showSlide(0);
+    }
+  </script>
+</body>
+</html>
